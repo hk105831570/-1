@@ -78,17 +78,20 @@ async function handleLogin() {
 
     ElMessage.success('登录成功');
 
+    const target = result.user.role
+      ? '/admin/dashboard'
+      : result.user.isFirstLogin
+        ? '/change-password'
+        : '/';
+
     // 管理员跳转后台
-    if (result.user.role) {
-      router.push('/admin/dashboard');
-    } else if (result.user.isFirstLogin) {
-      // 员工首次登录，跳转到改密页
-      router.push('/change-password');
-    } else {
-      router.push('/');
+    try {
+      await router.replace(target);
+    } catch {
+      window.location.href = target;
     }
-  } catch {
-    // 错误已在请求拦截器中处理
+  } catch (error: any) {
+    ElMessage.error(error?.message || '登录失败');
   } finally {
     loading.value = false;
   }

@@ -27,8 +27,11 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response) => {
     const body = response.data;
-    if (body.code === 200) {
+    if (body?.code === 200) {
       return body.data;
+    }
+    if (typeof body?.code === 'number' && body.code !== 200) {
+      return Promise.reject(new Error(body.message || '请求失败'));
     }
     return body;
   },

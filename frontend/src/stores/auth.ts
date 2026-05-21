@@ -10,6 +10,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(params: LoginParams): Promise<LoginResult> {
     const result = await loginApi(params);
+    if (!result?.token || !result?.user) {
+      throw new Error('登录响应异常，请检查后端接口');
+    }
     token.value = result.token;
     user.value = result.user;
     isLoggedIn.value = true;
