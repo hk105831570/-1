@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { getToken } from '../utils/storage';
+import { getToken, getUser } from '../utils/storage';
 
 const basePath = import.meta.env.VITE_BASE_URL || '/training/';
 
@@ -98,13 +98,24 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, _from, next) => {
   const token = getToken();
+  const user = getUser();
+
+  // 需要登录但无 token → 登录页
   if (to.meta.requiresAuth !== false && !token) {
-    next('/login');
-  } else if (to.path === '/login' && token) {
-    next('/');
-  } else {
-    next();
+    return next('/login');
   }
+
+  // 有 token 但访问登录页 → 按角色跳转
+  if (to.path === '/login' && token) {
+    return next(user?.role ? '/admin/dashboard' : '/');
+  }
+
+  // 有 token 访问根路径，管理员 → 后台
+  if (to.path === '/' && token && user?.role) {
+    return next('/admin/dashboard');
+  }
+
+  next();
 });
 
 export default router;
