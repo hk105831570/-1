@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, clearStorage } from '../utils/storage';
 import { ElMessage } from 'element-plus';
 
-const basePath = import.meta.env.VITE_BASE_URL || '/training/';
+const basePath = import.meta.env.VITE_BASE_URL || import.meta.env.BASE_URL || '/training/';
 
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || `${basePath}api`,
