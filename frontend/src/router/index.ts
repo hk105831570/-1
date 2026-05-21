@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { getToken } from '../utils/storage';
 
+const basePath = import.meta.env.VITE_BASE_URL || '/training/';
+
 const router = createRouter({
-  history: createWebHistory('/training/'),
+  history: createWebHistory(basePath),
   routes: [
     {
       path: '/login',

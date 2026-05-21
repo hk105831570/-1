@@ -2,8 +2,10 @@ import axios from 'axios';
 import { getToken, clearStorage } from '../utils/storage';
 import { ElMessage } from 'element-plus';
 
+const basePath = import.meta.env.VITE_BASE_URL || '/training/';
+
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || '/training/api',
+  baseURL: import.meta.env.VITE_API_BASE || `${basePath}api`,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
@@ -37,7 +39,7 @@ request.interceptors.response.use(
       switch (status) {
         case 401:
           clearStorage();
-          window.location.href = '/training/login';
+          window.location.href = `${basePath}login`;
           ElMessage.error('登录已过期，请重新登录');
           break;
         case 403:
