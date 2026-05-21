@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 员工表 ====================
+model User {
+  id              Int       @id @default(autoincrement())
+  employeeId      String    @unique @map("employee_id") @db.VarChar(32)   // 工号
+  name            String    @map("name") @db.VarChar(64)                  // 姓名
+  idNumber        String    @map("id_number") @db.VarChar(512)            // 身份证号(AES加密存储)
+  phone           String?   @map("phone") @db.VarChar(20)                 // 手机号
+  department      String?   @map("department") @db.VarChar(128)           // 部门
+  position        String?   @map("position") @db.VarChar(128)             // 岗位
+  hireDate        DateTime? @map("hire_date")                             // 入职日期
+  status          String    @default("active") @db.VarChar(16)            // 状态: active/inactive
+  password        String    @db.VarChar(256)                              // 密码(bcrypt哈希)
+  isFirstLogin    Boolean   @default(true) @map("is_first_login")         // 是否首次登录
+  loginFailCount  Int       @default(0) @map("login_fail_count")          // 连续失败次数
+  lockedUntil     DateTime? @map("locked_until")                          // 锁定截止时间
+
+  studyRecords           StudyRecord[]
+  examRecords            ExamRecord[]
+  positionChangeHistory  PositionChangeHistory[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([phone], name: "idx_user_phone")
+  @@index([department], name: "idx_user_department")
+  @@index([position], name: "idx_user_position")
+  @@index([status], name: "idx_user_status")
+  @@map("users")
+}
+
+// ==================== 管理员表 ====================
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(64)         // 管理员用户名
+  password  String   @db.VarChar(256)                 // 密码(bcrypt哈希)
+  name      String   @db.VarChar(64)                  // 姓名
+  role      String   @default("admin") @db.VarChar(16) // 角色: super_admin / admin
+  status    String   @default("active") @db.VarChar(16)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("admins")
+}
+
+// ==================== 岗位变动历史表 ====================
+model PositionChangeHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  oldPosition String?  @map("old_position") @db.VarChar(128)
+  newPosition String?  @map("new_position") @db.VarChar(128)
+  changedAt   DateTime @default(now()) @map("changed_at")
+  operator    String   @db.VarChar(64)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId], name: "idx_position_change_user")
+  @@map("position_change_history")
+}
+
+// ==================== 课程表 ====================
+model Course {
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(256)
+  category       String?  @db.VarChar(128)                        // 分类
+  videoUrl       String?  @map("video_url") @db.VarChar(512)      // 视频地址
+  videoDuration  Int?     @map("video_duration")                   // 视频时长(秒)
+  version        Int      @default(1)                              // 版本号
+  docUrl         String?  @map("doc_url") @db.VarChar(512)         // 说明文档地址
+  passingScore   Int      @default(80) @map("passing_score")       // 通过分数线(百分制)
+  isActive       Boolean  @default(true) @map("is_active")         // 是否启用
+
+  positionCourses PositionCourse[]
+  studyRecords    StudyRecord[]
+  examQuestions   ExamQuestion[]
+  examRecords     ExamRecord[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("courses")
+}
+
+// ==================== 岗位课程映射表 ====================
+model PositionCourse {
+  id              Int    @id @default(autoincrement())
+  position        String @db.VarChar(128)      // 岗位名
+  courseId         Int    @map("course_id")
+  isRequired      Boolean @default(true) @map("is_required")
+  validMonths     Int    @default(0) @map("valid_months")  // 有效期(月), 0=永久
+
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@index([position], name: "idx_position_course_position")
+  @@index([courseId], name: "idx_position_course_course")
+  @@unique([position, courseId], name: "uk_position_course")
+  @@map("position_courses")
+}
+
+// ==================== 学习记录表 ====================
+model StudyRecord {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  courseId      Int       @map("course_id")
+  courseVersion Int       @map("course_version")
+  startTime     DateTime  @default(now()) @map("start_time")
+  lastViewTime  DateTime? @map("last_view_time")
+  totalDuration Int       @default(0) @map("total_duration")      // 累计观看时长(秒)
+  currentProgress Int   @default(0) @map("current_progress")     // 当前进度(秒)
+  isCompleted   Boolean   @default(false) @map("is_completed")
+  completedAt   DateTime? @map("completed_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId], name: "uk_user_course")
+  @@index([userId], name: "idx_study_user")
+  @@index([courseId], name: "idx_study_course")
+  @@map("study_records")
+}
+
+// ==================== 题目表 ====================
+model ExamQuestion {
+  id          Int    @id @default(autoincrement())
+  courseId    Int    @map("course_id")
+  questionType String @map("question_type") @db.VarChar(16)   // single/multiple/judge
+  title       String @db.Text                                  // 题干
+  options     String @db.Text                                  // 选项JSON
+  answer      String @db.VarChar(512)                          // 正确答案
+  score       Int    @default(10)                              // 分值
+  sortOrder   Int    @default(0) @map("sort_order")
+
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@index([courseId], name: "idx_question_course")
+  @@map("exam_questions")
+}
+
+// ==================== 考试记录表 ====================
+model ExamRecord {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  courseId      Int      @map("course_id")
+  courseVersion Int      @map("course_version")
+  examTime      DateTime @default(now()) @map("exam_time")
+  score         Int      @default(0)
+  isPassed      Boolean  @default(false) @map("is_passed")
+  answerDetail  String   @map("answer_detail") @db.Text  // 答题详情JSON
+  attemptNumber Int      @default(1) @map("attempt_number")           // 第几次考试
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@index([userId, courseId], name: "idx_exam_user_course")
+  @@index([courseId], name: "idx_exam_course")
+  @@map("exam_records")
+}
+
+// ==================== 操作日志表 ====================
+model OperationLog {
+  id          Int      @id @default(autoincrement())
+  operatorId  Int      @map("operator_id")
+  operatorType String  @map("operator_type") @db.VarChar(16)   // employee/admin
+  actionType  String   @map("action_type") @db.VarChar(64)     // 操作类型
+  target      String?  @db.VarChar(256)                         // 操作对象
+  detail      String?  @db.Text                                 // 操作详情
+  ip          String?  @db.VarChar(64)                          // IP
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([operatorId], name: "idx_log_operator")
+  @@index([actionType], name: "idx_log_action")
+  @@index([createdAt], name: "idx_log_time")
+  @@map("operation_logs")
+}
