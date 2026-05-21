@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { login as loginApi, type LoginParams, type LoginResult } from '../api/auth';
-import { setToken, setUser, clearStorage, getToken } from '../utils/storage';
+import { setToken, setUser, clearStorage, getToken, getUser } from '../utils/storage';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(getToken());
-  const user = ref<any | null>(null);
+  const user = ref<any | null>(getUser());
   const isLoggedIn = ref<boolean>(!!token.value);
 
   async function login(params: LoginParams): Promise<LoginResult> {
@@ -26,11 +26,18 @@ export const useAuthStore = defineStore('auth', () => {
     clearStorage();
   }
 
+  function markPasswordChanged() {
+    if (!user.value) return;
+    user.value = { ...user.value, isFirstLogin: false };
+    setUser(user.value);
+  }
+
   return {
     token,
     user,
     isLoggedIn,
     login,
     logout,
+    markPasswordChanged,
   };
 });

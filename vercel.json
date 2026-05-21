@@ -4,6 +4,7 @@
   "installCommand": "cd frontend && npm install",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "http://47.102.101.20/training/api/$1" },
+    { "source": "/uploads/(.*)", "destination": "http://47.102.101.20/training/uploads/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

@@ -1,11 +1,10 @@
 import axios from 'axios';
 import { getToken, clearStorage } from '../utils/storage';
 import { ElMessage } from 'element-plus';
-
-const basePath = import.meta.env.VITE_BASE_URL || import.meta.env.BASE_URL || '/training/';
+import { apiBase, basePath } from '../utils/base-path';
 
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || `${basePath}api`,
+  baseURL: apiBase,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

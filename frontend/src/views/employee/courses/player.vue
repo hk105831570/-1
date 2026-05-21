@@ -7,7 +7,7 @@
         <video
           v-if="course.videoUrl"
           ref="videoRef"
-          :src="course.videoUrl.startsWith('http') ? course.videoUrl : `/training${course.videoUrl}`"
+          :src="getVideoSrc(course.videoUrl)"
           controls
           controlsList="nodownload noremoteplaytube noplaybackrate"
           disablePictureInPicture
@@ -68,6 +68,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { VideoCamera } from '@element-plus/icons-vue';
 import { getMyCourses, updateProgress } from '../../../api/employee-api';
+import { withBasePath } from '../../../utils/base-path';
 
 const route = useRoute();
 const router = useRouter();
@@ -100,6 +101,10 @@ function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function getVideoSrc(url: string) {
+  return withBasePath(url);
 }
 
 // 每10秒上报一次进度

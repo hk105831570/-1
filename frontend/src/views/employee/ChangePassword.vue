@@ -71,8 +71,8 @@ async function handleSubmit() {
   try {
     const res: any = await request.post('/auth/change-password', form);
     ElMessage.success(res.message || '密码修改成功');
-    authStore.logout();
-    router.push('/login');
+    authStore.markPasswordChanged();
+    router.push('/');
   } catch {
     // handled
   } finally {

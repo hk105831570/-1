@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { getToken, getUser } from '../utils/storage';
-
-const basePath = import.meta.env.VITE_BASE_URL || import.meta.env.BASE_URL || '/training/';
+import { basePath } from '../utils/base-path';
 
 const router = createRouter({
   history: createWebHistory(basePath),
